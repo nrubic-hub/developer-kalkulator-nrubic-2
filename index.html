@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Projektentwicklungs-Tool – Normal vs. Denkmal (Minimal)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 1rem; background:#f3f4f6; }
+    h1 { font-size: 1.4rem; }
+    .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 1rem; }
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+    .card { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    label { font-size:0.8rem; font-weight:bold; display:block; margin-top:0.4rem; }
+    input, select { width:100%; padding:0.3rem; margin-top:0.15rem; box-sizing:border-box; }
+    button { margin-top:0.7rem; padding:0.5rem 0.8rem; width:100%; background:#2563eb; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    button:hover { background:#1d4ed8; }
+    table { width:100%; border-collapse:collapse; font-size:0.75rem; }
+    th, td { border:1px solid #ddd; padding:0.2rem 0.3rem; text-align:right; }
+    th:first-child, td:first-child { text-align:left; }
+    .kpis { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:0.5rem; font-size:0.8rem; }
+    .kpi { background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:0.4rem; }
+    .kpi-title { font-size:0.7rem; color:#4b5563; }
+    .kpi-val-normal { color:#2563eb; font-weight:bold; }
+    .kpi-val-denk { color:#059669; font-weight:bold; }
+  </style>
+</head>
+<body>
+<h1>Projektentwicklungs-Tool – Normal vs. Denkmal</h1>
+<p>Werte eingeben, dann auf <b>Berechnen</b> klicken. Rechts siehst du Cashflows & Kennzahlen.</p>
+<div class="container">
+  <div class="card">
+    <h2>Eingaben</h2>
+    <label>Projektname
+      <input id="projectName" type="text" value="Beispiel-Projekt Frankfurt">
+    </label>
+    <label>Szenario
+      <select id="scenario">
+        <option value="both">Normal & Denkmal</option>
+        <option value="normal">Nur Normal</option>
+        <option value="denkmal">Nur Denkmal</option>
+      </select>
+    </label>
+    <h3>Objektdaten</h3>
+    <label>Kaufpreis (€)
+      <input id="kaufpreis" type="number" value="350000">
+    </label>
+    <label>Sanierungskosten (€)
+      <input id="sanierung" type="number" value="150000">
+    </label>
+    <label>Gebäudeanteil (%) 
+      <input id="gebaeudeanteil" type="number" value="75">
+    </label>
+    <label>Wertsteigerung p.a. (%) 
+      <input id="growth" type="number" value="2">
+    </label>
+    <h3>Finanzierung</h3>
+    <label>Eigenkapital (€)
+      <input id="eigenkapital" type="number" value="100000">
+    </label>
+    <label>Zinssatz p.a. (%)
+      <input id="zins" type="number" value="4.5">
+    </label>
+    <label>Tilgungssatz p.a. (%)
+      <input id="tilgung" type="number" value="2">
+    </label>
+    <label>Haltejahre
+      <input id="haltejahre" type="number" value="30">
+    </label>
+    <h3>Miete & Steuer</h3>
+    <label>Kaltmiete / Monat (€)
+      <input id="miete" type="number" value="1300">
+    </label>
+    <label>Nicht umlagefähige Kosten / Jahr (€)
+      <input id="kosten" type="number" value="2500">
+    </label>
+    <label>Steuersatz (%)
+      <input id="steuersatz" type="number" value="42">
+    </label>
+    <button id="calcBtn">Berechnen</button>
+    <p style="font-size:0.7rem;color:#6b7280;margin-top:0.5rem;">
+      Vereinfachtes Modell, keine Steuer- oder Rechtsberatung. AfA Normal: 2% Gebäude + 2% Sanierung. 
+      Denkmal: 2% Gebäude + 9/7% auf Sanierung (Jahr 1–8/9–12).
+    </p>
+  </div>
+  <div class="card">
+    <h2 id="projTitle">Ergebnisse</h2>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-title">Netto-CF Jahr 1</div>
+        <div>Normal: <span class="kpi-val-normal" id="cf1N">–</span></div>
+        <div>Denkmal: <span class="kpi-val-denk" id="cf1D">–</span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">kumul. CF nach 10 J.</div>
+        <div>Normal: <span class="kpi-val-normal" id="cum10N">–</span></div>
+        <div>Denkmal: <span class="kpi-val-denk" id="cum10D">–</span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">kumul. CF am Ende</div>
+        <div>Normal: <span class="kpi-val-normal" id="cumEndN">–</span></div>
+        <div>Denkmal: <span class="kpi-val-denk" id="cumEndD">–</span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">Nettoerlös Verkauf Jahr 10</div>
+        <div>Normal: <span class="kpi-val-normal" id="sale10N">–</span></div>
+        <div>Denkmal: <span class="kpi-val-denk" id="sale10D">–</span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">Nettoerlös Verkauf Ende</div>
+        <div>Normal: <span class="kpi-val-normal" id="saleEndN">–</span></div>
+        <div>Denkmal: <span class="kpi-val-denk" id="saleEndD">–</span></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">IRR (ohne Verkauf)</div>
+        <div>Normal: <span class="kpi-val-normal" id="irrN">–</span></div>
+        <div>Denkmal: <span class="kpi-val-denk" id="irrD">–</span></div>
+      </div>
+    </div>
+    <canvas id="cfChart" style="margin-top:0.5rem;"></canvas>
+    <canvas id="cumChart" style="margin-top:0.5rem;"></canvas>
+    <h3 style="font-size:0.9rem;margin-top:0.6rem;">Jahrestabelle</h3>
+    <div style="max-height:220px;overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Jahr</th>
+            <th>CF N</th>
+            <th>kum N</th>
+            <th>CF D</th>
+            <th>kum D</th>
+            <th>Rest N</th>
+            <th>Rest D</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+function formatEuro(x){
+  if(isNaN(x) || !isFinite(x)) return "–";
+  const sign = x<0?"-":""; const v=Math.abs(x);
+  return sign + v.toLocaleString("de-DE",{minimumFractionDigits:0,maximumFractionDigits:0}) + " €";
+}
+function formatPercent(x){
+  if(x===null || isNaN(x) || !isFinite(x)) return "–";
+  return (x*100).toFixed(1) + " %";
+}
+function irr(cfs,minRate=-0.99,maxRate=1.0,tol=1e-6,maxIter=100){
+  function npv(r){let s=0;for(let t=0;t<cfs.length;t++){s+=cfs[t]/Math.pow(1+r,t);}return s;}
+  let fMin=npv(minRate), fMax=npv(maxRate);
+  if(fMin*fMax>0) return null;
+  let low=minRate, high=maxRate;
+  for(let i=0;i<maxIter;i++){
+    const mid=(low+high)/2, fMid=npv(mid);
+    if(Math.abs(fMid)<tol) return mid;
+    if(fMin*fMid<0){high=mid;fMax=fMid;} else {low=mid;fMin=fMid;}
+  }
+  return (low+high)/2;
+}
+let cfChart=null, cumChart=null;
+function calc(){
+  const proj=document.getElementById("projectName").value.trim();
+  document.getElementById("projTitle").textContent="Ergebnisse – " + (proj||"Unbenannt");
+  const scenario=document.getElementById("scenario").value;
+  const kaufpreis=parseFloat(document.getElementById("kaufpreis").value)||0;
+  const sanierung=parseFloat(document.getElementById("sanierung").value)||0;
+  const gebPct=(parseFloat(document.getElementById("gebaeudeanteil").value)||0)/100;
+  const growth=(parseFloat(document.getElementById("growth").value)||0)/100;
+  const ek=parseFloat(document.getElementById("eigenkapital").value)||0;
+  const zins=(parseFloat(document.getElementById("zins").value)||0)/100;
+  const tilg=(parseFloat(document.getElementById("tilgung").value)||0)/100;
+  const years=Math.max(1,Math.min(parseInt(document.getElementById("haltejahre").value)||30,50));
+  const mieteMonat=parseFloat(document.getElementById("miete").value)||0;
+  const kostenPa=parseFloat(document.getElementById("kosten").value)||0;
+  const stSatz=(parseFloat(document.getElementById("steuersatz").value)||0)/100;
+
+  const gebWert=kaufpreis*gebPct;
+  const fk=Math.max(0,kaufpreis-ek);
+  let ann;
+  if(zins>0){
+    const pow=Math.pow(1+zins,years);
+    ann=fk*(zins*pow)/(pow-1);
+  } else {
+    ann=fk/years;
+  }
+  const afaGebNorm=gebWert*0.02;
+  const afaSanNorm=sanierung*0.02;
+  const afaNormTotal=afaGebNorm+afaSanNorm;
+  const cfN=[], cfD=[], cumN=[], cumD=[], debtN=[], debtD=[], labels=[];
+  labels.push(0);
+  cfN.push(-ek); cfD.push(-ek);
+  cumN.push(-ek); cumD.push(-ek);
+  debtN.push(fk); debtD.push(fk);
+  let dN=fk, dD=fk, cN=-ek, cD=-ek;
+  const mietePa=mieteMonat*12;
+  for(let year=1; year<=years; year++){
+    labels.push(year);
+    let zN=dN*zins; let rateN=ann; let tN=Math.max(0,rateN-zN); dN=Math.max(0,dN-tN);
+    const steuerErgN=mietePa-kostenPa-zN-afaNormTotal;
+    const stEffN=-steuerErgN*stSatz;
+    const cfYearN=mietePa-kostenPa-rateN+stEffN;
+    cN+=cfYearN;
+    cfN.push(cfYearN); cumN.push(cN); debtN.push(dN);
+
+    let zD=dD*zins; let rateD=ann; let tD=Math.max(0,rateD-zD); dD=Math.max(0,dD-tD);
+    let afaSanD=0;
+    if(year>=1 && year<=8) afaSanD=sanierung*0.09;
+    else if(year>=9 && year<=12) afaSanD=sanierung*0.07;
+    const afaTotD=afaGebNorm+afaSanD;
+    const steuerErgD=mietePa-kostenPa-zD-afaTotD;
+    const stEffD=-steuerErgD*stSatz;
+    const cfYearD=mietePa-kostenPa-rateD+stEffD;
+    cD+=cfYearD;
+    cfD.push(cfYearD); cumD.push(cD); debtD.push(dD);
+  }
+  const year10=Math.min(10,years);
+  const val10=kaufpreis*Math.pow(1+growth,year10);
+  const valEnd=kaufpreis*Math.pow(1+growth,years);
+  const sale10N=val10-debtN[year10];
+  const sale10D=val10-debtD[year10];
+  const saleEndN=valEnd-debtN[years];
+  const saleEndD=valEnd-debtD[years];
+  const irrValN=irr(cfN);
+  const irrValD=irr(cfD);
+
+  document.getElementById("cf1N").textContent=formatEuro(cfN[1]||0);
+  document.getElementById("cf1D").textContent=formatEuro(cfD[1]||0);
+  document.getElementById("cum10N").textContent=formatEuro(cumN[year10]||cumN[cumN.length-1]);
+  document.getElementById("cum10D").textContent=formatEuro(cumD[year10]||cumD[cumD.length-1]);
+  document.getElementById("cumEndN").textContent=formatEuro(cumN[cumN.length-1]);
+  document.getElementById("cumEndD").textContent=formatEuro(cumD[cumD.length-1]);
+  document.getElementById("sale10N").textContent=formatEuro(sale10N);
+  document.getElementById("sale10D").textContent=formatEuro(sale10D);
+  document.getElementById("saleEndN").textContent=formatEuro(saleEndN);
+  document.getElementById("saleEndD").textContent=formatEuro(saleEndD);
+  document.getElementById("irrN").textContent=irrValN!==null?formatPercent(irrValN):"–";
+  document.getElementById("irrD").textContent=irrValD!==null?formatPercent(irrValD):"–";
+
+  const tbody=document.getElementById("tableBody");
+  tbody.innerHTML="";
+  for(let i=0;i<labels.length;i++){
+    const tr=document.createElement("tr");
+    const cells=[
+      labels[i],
+      formatEuro(cfN[i]),
+      formatEuro(cumN[i]),
+      formatEuro(cfD[i]),
+      formatEuro(cumD[i]),
+      formatEuro(debtN[i]),
+      formatEuro(debtD[i])
+    ];
+    cells.forEach((c,idx)=>{
+      const td=document.createElement("td");
+      td.textContent=c;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+
+  const ctx1=document.getElementById("cfChart").getContext("2d");
+  const ctx2=document.getElementById("cumChart").getContext("2d");
+  if(cfChart) cfChart.destroy();
+  if(cumChart) cumChart.destroy();
+  const showN=scenario==="normal"||scenario==="both";
+  const showD=scenario==="denkmal"||scenario==="both";
+  const dsCF=[], dsCum=[];
+  if(showN){
+    dsCF.push({label:"CF Normal",data:cfN,borderColor:"rgba(37,99,235,1)",backgroundColor:"rgba(37,99,235,0.2)",tension:0.1});
+    dsCum.push({label:"kumul. Normal",data:cumN,borderColor:"rgba(37,99,235,1)",backgroundColor:"rgba(37,99,235,0.2)",tension:0.1});
+  }
+  if(showD){
+    dsCF.push({label:"CF Denkmal",data:cfD,borderColor:"rgba(5,150,105,1)",backgroundColor:"rgba(5,150,105,0.2)",tension:0.1});
+    dsCum.push({label:"kumul. Denkmal",data:cumD,borderColor:"rgba(5,150,105,1)",backgroundColor:"rgba(5,150,105,0.2)",tension:0.1});
+  }
+  cfChart=new Chart(ctx1,{type:"line",data:{labels,datasets:dsCF},options:{responsive:true,plugins:{legend:{display:true}},scales:{x:{title:{display:true,text:"Jahr"}},y:{title:{display:true,text:"Netto-CF"}}}}});
+  cumChart=new Chart(ctx2,{type:"line",data:{labels,datasets:dsCum},options:{responsive:true,plugins:{legend:{display:true}},scales:{x:{title:{display:true,text:"Jahr"}},y:{title:{display:true,text:"kumul. CF"}}}}});
+}
+document.getElementById("calcBtn").addEventListener("click",calc);
+window.addEventListener("load",calc);
+</script>
+</body>
+</html>
