@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denkmal-AfA & Finanzierungs-Kalkulator</title>
+    <style>
+        /* CSS-Teil: Definiert das Aussehen des Kalkulators */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+        h2 {
+            color: #007bff;
+            margin-top: 25px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .input-item {
+            flex-basis: 48%;
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1e7e34;
+        }
+        .summary-box {
+            background-color: #e9f7ef;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #28a745;
+        }
+        .summary-box p {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .summary-box span {
+            color: #007bff;
+            float: right;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: right;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+        }
+        .positive { color: #28a745; font-weight: bold; }
+        .negative { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Denkmal-Immobilien-Kalkulator (Kapitalanlage)</h1>
+
+        <h2>Objekt- und Finanzdaten</h2>
+        <div class="input-group">
+            <div class="input-item">
+                <label for="kaufpreis">Gesamtkaufpreis inkl. Sanierung (€):</label>
+                <input type="number" id="kaufpreis" value="500000" min="1000">
+            </div>
+            <div class="input-item">
+                <label for="grundstuecksanteil">Grundstücksanteil (% des Kaufpreises):</label>
+                <input type="number" id="grundstuecksanteil" value="15" min="0" max="100">
+            </div>
+            <div class="input-item">
+                <label for="sanierungskosten_prozent">Sanierungskosten-Anteil (% des Kaufpreises):</label>
+                <input type="number" id="sanierungskosten_prozent" value="65" min="0" max="100">
+            </div>
+            <div class="input-item">
+                <label for="baujahr_vor_1925">Baujahr:</label>
+                <select id="baujahr_vor_1925">
+                    <option value="true">vor 1925 (2,5% AfA)</option>
+                    <option value="false">ab 1925 (2,0% AfA)</option>
+                </select>
+            </div>
+        </div>
+
+        <h2>Miete und Steuern</h2>
+        <div class="input-group">
+            <div class="input-item">
+                <label for="kaltmiete_monatlich">Kaltmieteinnahmen pro Monat (€):</label>
+                <input type="number" id="kaltmiete_monatlich" value="1200" min="0">
+            </div>
+            <div class="input-item">
+                <label for="grenzsteuersatz">Ihr Grenzsteuersatz (%):</label>
+                <input type="number" id="grenzsteuersatz" value="42" min="15" max="45">
+            </div>
+        </div>
+
+        <h2>Kreditdetails</h2>
+        <div class="input-group">
+            <div class="input-item">
+                <label for="kreditbetrag">Kreditbetrag (€):</label>
+                <input type="number" id="kreditbetrag" value="400000" min="0">
+            </div>
+            <div class="input-item">
+                <label for="sollzins">Sollzins p.a. (%):</label>
+                <input type="number" id="sollzins" value="4.0" step="0.1" min="0">
+            </div>
+            <div class="input-item">
+                <label for="tilgung">Anfängliche Tilgung p.a. (%):</label>
+                <input type="number" id="tilgung" value="2.0" step="0.1" min="0">
+            </div>
+            <div class="input-item">
+                <label for="nebenkosten_pa">Laufende Bewirtschaftungskosten p.a. (€):</label>
+                <input type="number" id="nebenkosten_pa" value="1500" min="0">
+            </div>
+        </div>
+
+        <button onclick="berechneKalkulation()">Kalkulation für 12 Jahre durchführen</button>
+
+        <div id="ergebnis-section" style="display:none;">
+            <h2>Zusammenfassung (12 Jahre)</h2>
+            <div class="summary-box">
+                <p>Gesamte Steuerersparnis durch AfA und Zinsen: <span id="ersparnis-gesamt"></span></p>
+                <p>Kumulierter Cashflow (nach Steuern): <span id="cashflow-kumuliert"></span></p>
+            </div>
+
+            <h2>Jährliche Detailansicht (AfA, Finanzierung & Cashflow)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Jahr</th>
+                        <th>Restschuld (€)</th>
+                        <th>Jährl. Zinsen (€)</th>
+                        <th>AfA Altbau (€)</th>
+                        <th>Denkmal-AfA (€)</th>
+                        <th>Steuerersparnis (€)</th>
+                        <th>Cashflow (nach Steuern, €)</th>
+                    </tr>
+                </thead>
+                <tbody id="ergebnis-tabelle">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript-Teil: Definiert die Berechnungslogik
+        function format(value) {
+            return value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function berechneKalkulation() {
+            const kaufpreis = parseFloat(document.getElementById('kaufpreis').value);
+            const grundstuecksanteil_prozent = parseFloat(document.getElementById('grundstuecksanteil').value) / 100;
+            const sanierungskosten_prozent = parseFloat(document.getElementById('sanierungskosten_prozent').value) / 100;
+            const baujahr_vor_1925 = document.getElementById('baujahr_vor_1925').value === 'true';
+            const kaltmiete_monatlich = parseFloat(document.getElementById('kaltmiete_monatlich').value);
+            const grenzsteuersatz = parseFloat(document.getElementById('grenzsteuersatz').value) / 100;
+            let kreditbetrag = parseFloat(document.getElementById('kreditbetrag').value);
+            const sollzins_prozent = parseFloat(document.getElementById('sollzins').value) / 100;
+            const tilgung_prozent = parseFloat(document.getElementById('tilgung').value) / 100;
+            const nebenkosten_pa = parseFloat(document.getElementById('nebenkosten_pa').value);
+
+            if (sanierungskosten_prozent + grundstuecksanteil_prozent >= 1) {
+                alert("Grundstücks- und Sanierungskostenanteil dürfen zusammen 100% des Kaufpreises nicht überschreiten.");
+                return;
+            }
+
+            const grundstuecksBasis = kaufpreis * grundstuecksanteil_prozent;
+            const sanierungBasis = kaufpreis * sanierungskosten_prozent;
+            const gebaeudeBasis = kaufpreis - grundstuecksBasis;
+            const altbauBasis = gebaeudeBasis - sanierungBasis; 
+            
+            const altbauAfaRate = baujahr_vor_1925 ? 0.025 : 0.02; 
+            const altbauAfaEuro = altbauBasis * altbauAfaRate;
+            
+            const kaltmiete_pa = kaltmiete_monatlich * 12;
+            const anfaenglicheAnnunitaet = kreditbetrag * (sollzins_prozent + tilgung_prozent);
+
+            let htmlTabelle = '';
+            let kumulierteSteuerersparnis = 0;
+            let kumulierterCashflow = 0;
+
+            for (let jahr = 1; jahr <= 12; jahr++) {
+                const zinsenEuro = kreditbetrag * sollzins_prozent;
+                const tilgungEuro = anfaenglicheAnnunitaet - zinsenEuro;
+                const restschuld = kreditbetrag - tilgungEuro;
+
+                let sanierungAfaRate = 0;
+                if (jahr <= 8) {
+                    sanierungAfaRate = 0.09; 
+                } else if (jahr <= 12) {
+                    sanierungAfaRate = 0.07; 
+                }
+                const sanierungAfaEuro = sanierungBasis * sanierungAfaRate;
+
+                const gesammtAfaEuro = altbauAfaEuro + sanierungAfaEuro;
+                const werbungskosten = gesammtAfaEuro + zinsenEuro + nebenkosten_pa; 
+                
+                const einkommen_vermietung = kaltmiete_pa - werbungskosten;
+                
+                const steuerersparnis = (einkommen_vermietung < 0) ? Math.abs(einkommen_vermietung) * grenzsteuersatz : 0;
+                
+                const cashflowVorSteuern = kaltmiete_pa - anfaenglicheAnnunitaet - nebenkosten_pa;
+                const cashflowNachSteuern = cashflowVorSteuern + steuerersparnis;
+
+                kumulierteSteuerersparnis += steuerersparnis;
+                kumulierterCashflow += cashflowNachSteuern;
+
+                htmlTabelle += `
+                    <tr>
+                        <td>${jahr}</td>
+                        <td>${format(restschuld)} €</td>
+                        <td>${format(zinsenEuro)} €</td>
+                        <td>${format(altbauAfaEuro)} €</td>
+                        <td>${format(sanierungAfaEuro)} €</td>
+                        <td class="${steuerersparnis > 0 ? 'positive' : ''}">${format(steuerersparnis)} €</td>
+                        <td class="${cashflowNachSteuern > 0 ? 'positive' : 'negative'}">${format(cashflowNachSteuern)} €</td>
+                    </tr>
+                `;
+
+                kreditbetrag = restschuld;
+            }
+
+            document.getElementById('ergebnis-tabelle').innerHTML = htmlTabelle;
+            
+            document.getElementById('ersparnis-gesamt').textContent = format(kumulierteSteuerersparnis) + ' €';
+            document.getElementById('ersparnis-gesamt').className = kumulierteSteuerersparnis > 0 ? 'positive' : 'negative';
+
+            document.getElementById('cashflow-kumuliert').textContent = format(kumulierterCashflow) + ' €';
+            document.getElementById('cashflow-kumuliert').className = kumulierterCashflow > 0 ? 'positive' : 'negative';
+            
+            document.getElementById('ergebnis-section').style.display = 'block';
+        }
+
+        window.onload = berechneKalkulation;
+    </script>
+</body>
+</html>
